@@ -1,0 +1,370 @@
+Using tsdata.marketdata;
+using elsystem.collections;
+using elsystem; 
+
+Input: look1(12), look2(24);
+
+vars: vector Sscore(null), zscoreval(0), SAvg(0), LAvg(0), LSum(0), SSum(0), PctChng(0), 
+STDV(0), x(0), y(0), MaxLookBack(0);
+
+Vars: AUDCAD(0),AUDCHF(0),AUDJPY(0),AUDNZD(0),AUDUSD(0),CADCHF(0),CADJPY(0),
+CHFJPY(0),EURAUD(0),EURCAD(0),EURCHF(0),EURGBP(0),EURJPY(0),EURNZD(0),EURUSD(0),
+GBPAUD(0),GBPCAD(0),GBPCHF(0),GBPJPY(0),GBPNZD(0),GBPUSD(0),NZDCAD(0),NZDCHF(0),
+NZDJPY(0),NZDUSD(0),USDCAD(0),USDCHF(0),USDJPY(0);
+
+Vars: ADScore(0), BPScore(0), CDScore(0), ECScore(0), intrabarpersist LastBar(FALSE),
+	JYScore(0), NEScore(0), SFScore(0), USScore(0), 
+	double AvgMoP(0);
+	
+//Oscillator
+Vars: ADScoreO(0), BPScoreO(0), CDScoreO(0), ECScoreO(0),JYScoreO(0), NEScoreO(0), SFScoreO(0), USScoreO(0);
+
+//--------------------------- Fotsie 28 pairs  ---------------------------//
+//Major
+Vars: eurusdClose(0),eurusdOpen(0),gbpusdClose(0),gbpusdOpen(0),usdcadClose(0),usdcadOpen(0),usdchfOpen(0),
+	  usdchfClose(0),nzdusdClose(0),nzdusdOpen(0),usdjpyClose(0),usdjpyOpen(0),audusdOpen(0),audusdClose(0);
+//EUR
+Vars: euraudClose(0),euraudOpen(0),eurcadClose(0),eurcadOpen(0),eurgbpClose(0),eurgbpOpen(0),eurjpyClose(0),eurjpyOpen(0),
+	  eurnzdClose(0),eurnzdOpen(0),eurchfClose(0),eurchfOpen(0);
+//GBP
+Vars: gbpaudClose(0),gbpaudOpen(0),gbpcadClose(0),gbpcadOpen(0),gbpjpyClose(0),gbpjpyOpen(0),
+	  gbpnzdClose(0),gbpnzdOpen(0),gbpchfClose(0),gbpchfOpen(0);
+//AUD
+Vars: audcadClose(0),audcadOpen(0),audjpyClose(0),audjpyOpen(0),
+	  audnzdClose(0),audnzdOpen(0),audchfClose(0),audchfOpen(0);
+//CAD
+Vars: cadjpyClose(0),cadjpyOpen(0),cadchfClose(0),cadchfOpen(0);
+//NZD
+Vars: nzdjpyClose(0),nzdjpyOpen(0),nzdchfClose(0),nzdchfOpen(0),nzdcadClose(0),nzdcadOpen(0);
+//CHF
+Vars: chfjpyClose(0),chfjpyOpen(0);
+
+//TSI
+Vars: eurTsi(0),gbpTsi(0),cadTsi(0),audTsi(0),chfTsi(0),nzdTsi(0),jpyTsi(0),usdTsi(0);
+
+//--------------------------- Fotsie 28 pairs  ---------------------------//
+
+	
+method void AnalysisTechnique_Initialized( elsystem.Object sender, elsystem.InitializedEventArgs args ) 
+begin
+	Sscore = new vector;
+	begin
+	sAUDCAD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sAUDCAD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sAUDCAD.Load = true;
+	
+	sAUDCHF.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sAUDCHF.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sAUDCHF.Load = true;
+	
+	sAUDJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sAUDJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sAUDJPY.Load = true;
+
+	sAUDNZD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sAUDNZD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sAUDNZD.Load = true;
+	
+	sAUDUSD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sAUDUSD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sAUDUSD.Load = true;
+	
+	sEURAUD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURAUD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURAUD.Load = true;
+	
+	sGBPAUD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sGBPAUD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sGBPAUD.Load = true;
+	
+	sGBPCAD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sGBPCAD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sGBPCAD.Load = true;
+	
+	sGBPCHF.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sGBPCHF.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sGBPCHF.Load = true;
+
+	sGBPJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sGBPJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sGBPJPY.Load = true;
+	
+	sGBPNZD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sGBPNZD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sGBPNZD.Load = true;
+	
+	sGBPUSD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sGBPUSD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sGBPUSD.Load = true;
+	
+	sEURGBP.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURGBP.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURGBP.Load = true;
+	
+	sEURCAD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURCAD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURCAD.Load = true;
+	
+	sEURCHF.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURCHF.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURCHF.Load = true;
+	
+	sEURJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURJPY.Load = true;
+	
+	sEURNZD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURNZD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURNZD.Load = true;
+	
+	sEURUSD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sEURUSD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sEURUSD.Load = true;
+	
+	sNZDCAD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sNZDCAD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sNZDCAD.Load = true;
+	
+	sUSDCAD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sUSDCAD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sUSDCAD.Load = true;
+	
+	sCADJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sCADJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sCADJPY.Load = true;
+	
+	sCADCHF.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sCADCHF.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sCADCHF.Load = true;
+	
+	sCHFJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sCHFJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sCHFJPY.Load = true;
+	
+	sUSDJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sUSDJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sUSDJPY.Load = true;
+	
+	sNZDJPY.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sNZDJPY.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sNZDJPY.Load = true;
+	
+	sNZDCHF.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sNZDCHF.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sNZDCHF.Load = true;
+	
+	sNZDUSD.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sNZDUSD.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sNZDUSD.Load = true;
+	
+	sUSDCHF.Interval = DataInterval.FromCurrentSymbolData( BarType, BarInterval ) ;
+	sUSDCHF.Range.FirstDate = DateTime.FromELDateAndTime( Date[MaxBarsBack], Time[MaxBarsBack] ); 
+	sUSDCHF.Load = true;
+	end;
+end;
+
+Method double MintoTime(int Minutes)
+vars: double Hr, double One60th, double Min;
+begin
+	One60th = (1 / 60 );
+	Hr = IntPortion( Round( Minutes, 0 ) * One60th ) ;
+	Min = Minutes - 60 * Hr ;
+	Return (100 * Mod( Hr, 24 ) + Min) ;
+end;
+
+Method bool LBOC()
+var: bool LB;
+begin
+	LB = Date = JulianToDate( LastCalcJDate ) and Time = MintoTime( LastCalcMMTime );
+	Return LB;
+end;
+
+method void Timer1_Elapsed( elsystem.Object sender, elsystem.TimerElapsedEventArgs args ) 
+begin
+	Main();
+end;
+
+// Main
+method void Main()
+begin
+
+//-------------- Fotsie
+//Majors
+begin
+eurusdOpen = sEURUSD.Open[0];
+eurusdClose = sEURUSD.Close[0];
+
+gbpusdOpen = sGBPUSD.Open[0];
+gbpusdClose = sGBPUSD.Close[0];
+
+audusdOpen = sAUDUSD.Open[0];
+audusdClose = sAUDUSD.Close[0];
+
+nzdusdOpen = sNZDUSD.Open[0];
+nzdusdClose = sNZDUSD.Close[0];
+
+usdchfOpen = sUSDCHF.Open[0];
+usdchfClose = sUSDCHF.Close[0];
+
+usdcadOpen = sUSDCAD.Open[0];
+usdcadClose = sUSDCAD.Close[0];
+
+usdjpyOpen = sUSDJPY.Open[0];
+usdjpyClose = sUSDJPY.Close[0];
+
+//EUR
+eurcadOpen = sEURCAD.Open[0];
+eurcadClose = sEURCAD.Close[0];
+
+eurnzdOpen = sEURNZD.Open[0];
+eurnzdClose = sEURNZD.Close[0];
+
+eurgbpOpen = sEURGBP.Open[0];
+eurgbpClose = sEURGBP.Close[0];
+
+euraudOpen = sEURAUD.Open[0];
+euraudClose = sEURAUD.Close[0];
+
+eurjpyOpen = sEURJPY.Open[0];
+eurjpyClose = sEURJPY.Close[0];
+
+eurchfOpen = sEURCHF.Open[0];
+eurchfClose = sEURCHF.Close[0];
+
+eurgbpOpen = sEURGBP.Open[0];
+eurgbpClose = sEURGBP.Close[0]; 
+
+//GBP
+gbpcadOpen = sGBPCAD.Open[0];
+gbpcadClose = sGBPCAD.Close[0];
+
+gbpnzdOpen = sGBPNZD.Open[0];
+gbpnzdClose = sGBPNZD.Close[0];
+
+gbpaudOpen = sGBPAUD.Open[0];
+gbpaudClose = sGBPAUD.Close[0];
+
+gbpjpyOpen = sGBPJPY.Open[0];
+gbpjpyClose = sGBPJPY.Close[0];
+
+gbpchfOpen = sGBPCHF.Open[0];
+gbpchfClose = sGBPCHF.Close[0];
+
+//AUD
+audcadOpen = sAUDCAD.Open[0];
+audcadClose = sAUDCAD.Close[0];
+
+audjpyOpen = sAUDJPY.Open[0];
+audjpyClose = sAUDJPY.Close[0];
+
+audnzdOpen = sAUDNZD.Open[0];
+audnzdClose = sAUDNZD.Close[0];
+
+//CAD
+cadjpyOpen = sCADJPY.Open[0];
+cadjpyClose = sCADJPY.Close[0];
+
+cadchfOpen = sCADCHF.Open[0];
+cadchfClose = sCADCHF.Close[0];
+
+//NZD
+nzdcadOpen = sNZDCAD.Open[0];
+nzdcadClose = sNZDCAD.Close[0];
+
+nzdchfOpen = sNZDCHF.Open[0];
+nzdchfClose = sNZDCHF.Close[0];
+
+nzdjpyOpen = sNZDJPY.Open[0];
+nzdjpyClose = sNZDJPY.Close[0];
+
+//CHF
+chfjpyOpen = sCHFJPY.Open[0];
+chfjpyClose = sCHFJPY.Close[0];
+end;
+
+//TSI
+if BarNumber > maxlist(look1,look2) then Begin
+usdTsi = (TSIv2(usdcadOpen,usdcadClose,look1,look2) + TSIv2(usdchfOpen,usdchfClose,look1,look2) + TSIv2(usdjpyOpen,usdjpyClose,look1,look2) - 
+		  TSIv2(audusdOpen,audusdClose,look1,look2) - TSIv2(gbpusdOpen,gbpusdClose,look1,look2) - TSIv2(eurusdOpen,eurusdClose,look1,look2) - TSIv2(nzdusdOpen,nzdusdClose,look1,look2)) / 7;
+eurTsi = (TSIv2(eurusdOpen,eurusdClose,look1,look2) + TSIv2(euraudOpen,euraudClose,look1,look2) + TSIv2(eurnzdOpen,eurnzdClose,look1,look2) +
+		  TSIv2(eurchfOpen,eurchfClose,look1,look2) + TSIv2(eurgbpOpen,eurgbpClose,look1,look2) + TSIv2(eurcadOpen,eurcadClose,look1,look2) + TSIv2(eurjpyOpen,eurjpyClose,look1,look2)) / 7;
+gbpTsi = (TSIv2(gbpusdOpen,gbpusdClose,look1,look2) + TSIv2(gbpaudOpen,gbpaudClose,look1,look2) + TSIv2(gbpnzdOpen,gbpnzdClose,look1,look2) +
+		  TSIv2(gbpchfOpen,gbpchfClose,look1,look2) - TSIv2(eurgbpOpen,eurgbpClose,look1,look2) + TSIv2(gbpcadOpen,gbpcadClose,look1,look2) + TSIv2(gbpjpyOpen,gbpjpyClose,look1,look2)) / 7;
+audTsi = (TSIv2(audusdOpen,audusdClose,look1,look2) - TSIv2(gbpaudOpen,gbpaudClose,look1,look2) + TSIv2(audnzdOpen,audnzdClose,look1,look2) +
+		  TSIv2(audchfOpen,audchfClose,look1,look2) - TSIv2(euraudOpen,euraudClose,look1,look2) + TSIv2(audcadOpen,audcadClose,look1,look2) + TSIv2(audjpyOpen,audjpyClose,look1,look2)) / 7;		  
+cadTsi = (-TSIv2(audcadOpen,audcadClose,look1,look2) - TSIv2(gbpcadOpen,gbpcadClose,look1,look2) - TSIv2(nzdcadOpen,nzdcadClose,look1,look2) +
+		  TSIv2(cadchfOpen,cadchfClose,look1,look2) - TSIv2(eurcadOpen,eurcadClose,look1,look2) - TSIv2(usdcadOpen,usdcadClose,look1,look2) + TSIv2(cadjpyOpen,cadjpyClose,look1,look2)) / 7;
+nzdTsi = (TSIv2(nzdusdOpen,nzdusdClose,look1,look2) - TSIv2(audnzdOpen,audnzdClose,look1,look2) - TSIv2(eurnzdOpen,eurnzdClose,look1,look2) +
+		  TSIv2(nzdchfOpen,nzdchfClose,look1,look2) - TSIv2(gbpnzdOpen,gbpnzdClose,look1,look2) + TSIv2(nzdcadOpen,nzdcadClose,look1,look2) + TSIv2(nzdjpyOpen,nzdjpyClose,look1,look2)) / 7;
+chfTsi = (-TSIv2(usdchfOpen,usdchfClose,look1,look2) - TSIv2(audchfOpen,audchfClose,look1,look2) - TSIv2(eurchfOpen,eurchfClose,look1,look2) -
+		  TSIv2(nzdchfOpen,nzdchfClose,look1,look2) - TSIv2(gbpchfOpen,gbpchfClose,look1,look2) - TSIv2(cadchfOpen,cadchfClose,look1,look2) + TSIv2(chfjpyOpen,chfjpyClose,look1,look2)) / 7;
+jpyTsi = (-TSIv2(usdjpyOpen,usdjpyClose,look1,look2) - TSIv2(audjpyOpen,audjpyClose,look1,look2) - TSIv2(eurjpyOpen,eurjpyClose,look1,look2) -
+		  TSIv2(nzdjpyOpen,nzdjpyClose,look1,look2) - TSIv2(gbpjpyOpen,gbpjpyClose,look1,look2) - TSIv2(cadjpyOpen,cadjpyClose,look1,look2) - TSIv2(chfjpyOpen,chfjpyClose,look1,look2)) / 7;  
+end;	  		  		  
+
+
+USScore = usdTsi;
+ECScore = eurTsi;
+ADScore = audTsi;
+BPScore = gbpTsi;
+CDScore = cadTsi;
+JYScore = jpyTsi;
+NEScore = nzdTsi;
+SFScore = chfTsi;
+
+
+Plot9("AUD", "CurAUD");
+Plot11(ADScore, "CurAUDScore");
+SetPlotColor(9, Cyan);
+SetPlotColor(11, Cyan);
+
+Plot20("GBP", "CurGBP");
+Plot21(BPScore, "CurGBPScore");
+SetPlotColor(20, Green);
+SetPlotColor(21, green);
+
+Plot30("EUR", "CurEUR");
+Plot31(ECScore, "CurEURScore");
+SetPlotColor(30, Magenta);
+SetPlotColor(31, Magenta);
+
+Plot40("CAD", "CurCAD");
+Plot41(CDScore, "CurCADScore");
+SetPlotColor(40, Blue);
+SetPlotColor(41, Blue);
+
+Plot50("JPY", "CurJPY");
+Plot51(JYScore, "CurJPYScore");
+SetPlotColor(50, Red);
+SetPlotColor(51, red);
+
+Plot60("NZD", "CurNZD");
+Plot61(NEScore, "CurNZDScore");
+SetPlotColor(60, MyColors("Orange"));
+SetPlotColor(61, MyColors("Orange"));
+
+Plot70("CHF", "CurCHF");
+Plot71(SFScore, "CurCHFScore");
+SetPlotColor(70, Yellow);
+SetPlotColor(71, Yellow);
+
+Plot80("USD", "CurUSD");
+Plot81(USScore, "CurUSDScore");
+SetPlotColor(80, White);
+SetPlotColor(81, White);
+Plot90(0, "Zero");
+
+		
+end; // Main
+
+If LastBar = False then begin
+	If  LBOC() then begin
+		LastBar = True;
+		Timer1.Enable = TRUE;
+	end;	
+	Main();
+End else begin
+	If BarSTatus(1) = 2 then begin
+	Main();
+	end;
+end;
